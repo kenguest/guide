@@ -50,22 +50,40 @@
             <programlisting language="php">&lt;target name="main"
         description="==>test AdhocTask ">
 
-        &lt;adhoc-task name="foo">&lt;![CDATA[
-            class FooTest extends Task {
-                private $bar;
+        &lt;adhoc-task name="readversionini">&lt;![CDATA[
+            /**
+             * Reads version information from an ini file specified via a source attribute.
+             * Set the concatenated version number to a ProjectVersion property.
+             */
+            class ReadVersionIniTask extends \Phing\Task {
+                private string $file = "";
 
-                function setBar($bar) {
-                    $this->bar = $bar;
+                function setSource($file) {
+                    $this->log("Reading version information from file $file");
+                    $this->file = $file;
+                    $parsed = parse_ini_file($file);
+                    $major = $parsed['major'];
+                    $minor = $parsed['minor'];
+                    $patch = $parsed['patch'];
+                    $suffix = $parsed['suffix'];
+                    $version = "{$major}.{$minor}.${patch}";
+                    if ($suffix !== "") {
+                        $version .= $suffix;
+                    }
+                    $this->project->setNewProperty("ProjectVersion", $version);
                 }
 
                 function main() {
-                    $this->log("In FooTest: " . $this->bar);
+                    // Initialise the ProjectVersion property to an empty string - it can't be null
+                    $this->project->setNewProperty("ProjectVersion", "");
                 }
             }
         ]]&gt;&lt;/adhoc-task>
 
-        &lt;foo bar="B.L.I.N.G"/>
+        &lt;readini source="version.ini"/>
+        &lt;echo>Project version number is ${ProjectVersion}&lt;/echo>
 &lt;/target></programlisting>
+        <para><emphasis role="bold">Note, that an adhoc-task extends \Phing\Task as there are namespaces in Phing v3. Previously, for Phing v2 an adhoc task would just extend Task.</emphasis></para>
         </sect2>
 
     </sect1>
